@@ -7,22 +7,24 @@ export default function Command() {
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [imagePath, setImagePath] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadImageDimensions() {
       try {
         const items = await getSelectedFinderItems();
-        
+
         if (items.length === 0) {
           setError("Please select an image file in Finder first");
           return;
         }
 
-        const imagePath = items[0].path;
-        const name = imagePath.split("/").pop() || "Image";
+        const path = items[0].path;
+        const name = path.split("/").pop() || "Image";
         setFileName(name);
+        setImagePath(path);
 
-        const dims = await getImageDimensions(imagePath);
+        const dims = await getImageDimensions(path);
         setDimensions(dims);
       } catch (error) {
         setError("Error: Not a valid image file");
@@ -36,13 +38,16 @@ export default function Command() {
     return <Detail markdown={error} />;
   }
 
-  if (!dimensions || !fileName) {
+  if (!dimensions || !fileName || !imagePath) {
     return <Detail markdown="Loading..." />;
   }
 
   return (
     <Detail
-      markdown={`# ${fileName}\n\n**Dimensions:** ${dimensions.width}×${dimensions.height}`}
+      markdown={`# ${fileName}
+
+**Dimensions:** ${dimensions.width}×${dimensions.height}
+`}
       actions={
         <ActionPanel>
           <Action.CopyToClipboard
@@ -52,6 +57,10 @@ export default function Command() {
           <Action.CopyToClipboard
             title="Copy Height"
             content={String(dimensions.height)}
+          />
+          <Action.OpenWith
+            title="Open Image"
+            path={imagePath}
           />
         </ActionPanel>
       }
