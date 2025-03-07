@@ -1,70 +1,60 @@
-import { List, ActionPanel, Action } from "@raycast/api";
+import { ActionPanel, Action, Detail } from "@raycast/api";
 import { useState, useEffect } from "react";
-import fs from "fs";
-import path from "path";
 import { getImageDimensions } from "./utils/image";
-
-interface ImageFile {
-  name: string;
-  path: string;
-  dimensions?: {
-    width: number;
-    height: number;
-  };
-}
+import { getSelectedFinderItems } from "@raycast/api";
 
 export default function Command() {
-  const [images, setImages] = useState<ImageFile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   useEffect(() => {
-    loadImages();
+    async function loadImageDimensions() {
+      try {
+        const items = await getSelectedFinderItems();
+        
+        if (items.length === 0) {
+          setError("Please select an image file in Finder first");
+          return;
+        }
+
+        const imagePath = items[0].path;
+        const name = imagePath.split("/").pop() || "Image";
+        setFileName(name);
+
+        const dims = await getImageDimensions(imagePath);
+        setDimensions(dims);
+      } catch (error) {
+        setError("Error: Not a valid image file");
+      }
+    }
+
+    loadImageDimensions();
   }, []);
 
-  async function loadImages() {
-    try {
-      const desktopPath = path.join(process.env.HOME || "", "Desktop");
-      const files = fs.readdirSync(desktopPath);
-      const imageFiles = files
-        .filter((file) => /\.(jpg|jpeg|png|gif|webp)$/i.test(file))
-        .map((file) => ({
-          name: file,
-          path: path.join(desktopPath, file),
-        }));
+  if (error) {
+    return <Detail markdown={error} />;
+  }
 
-      const imagesWithDimensions = await Promise.all(
-        imageFiles.map(async (image) => {
-          try {
-            const dimensions = await getImageDimensions(image.path);
-            return { ...image, dimensions };
-          } catch {
-            return image;
-          }
-        })
-      );
-
-      setImages(imagesWithDimensions);
-    } catch (error) {
-      console.error("Failed to load images:", error);
-    }
-    setIsLoading(false);
+  if (!dimensions || !fileName) {
+    return <Detail markdown="Loading..." />;
   }
 
   return (
-    <List isLoading={isLoading}>
-      {images.map((image) => (
-        <List.Item
-          key={image.path}
-          title={image.name}
-          subtitle={image.dimensions ? `${image.dimensions.width}×${image.dimensions.height}` : "Loading..."}
-          actions={
-            <ActionPanel>
-              <Action.CopyToClipboard title="Copy Width" content={String(image.dimensions?.width || "")} />
-              <Action.CopyToClipboard title="Copy Height" content={String(image.dimensions?.height || "")} />
-            </ActionPanel>
-          }
-        />
-      ))}
-    </List>
+    <Detail
+      markdown={`# ${fileName}\n\n**Dimensions:** ${dimensions.width}×${dimensions.height}`}
+      actions={
+        <ActionPanel>
+          <Action.CopyToClipboard
+            title="Copy Width"
+            content={String(dimensions.width)}
+          />
+          <Action.CopyToClipboard
+            title="Copy Height"
+            content={String(dimensions.height)}
+          />
+        </ActionPanel>
+      }
+    />
   );
 }

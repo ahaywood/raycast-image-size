@@ -14,7 +14,18 @@
       "name": "image-size",
       "title": "Image Size",
       "description": "Displays the original size of an image",
-      "mode": "view"
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "requireFinder",
+          "type": "checkbox",
+          "required": true,
+          "title": "Require Finder Selection",
+          "description": "Requires an image to be selected in Finder",
+          "default": true,
+          "label": "Require Finder Selection"
+        }
+      ]
     }
   ],
   "dependencies": {
