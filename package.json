@@ -2,9 +2,10 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "image-size",
   "title": "Image Size",
-  "description": "Displays the original image dimensions",
+  "description": "Displays image dimensions and calculates new dimensions while maintaining aspect ratio",
   "icon": "extension-icon.png",
   "author": "ahhacreative",
+  "version": "0.2.0",
   "categories": [
     "Developer Tools"
   ],
@@ -26,6 +27,12 @@
           "label": "Require Finder Selection"
         }
       ]
+    },
+    {
+      "name": "image-resize-calculator",
+      "title": "Image Resize Calculator",
+      "description": "Calculate new dimensions while maintaining aspect ratio",
+      "mode": "view"
     }
   ],
   "dependencies": {
